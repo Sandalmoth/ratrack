@@ -1,0 +1,17 @@
+channels:
+- conda-forge
+- bioconda
+dependencies:
+- python=3.6
+- click=6.7
+- toml=0.9.4
+- matplotlib=2.2.2
+- snakemake=4.4.0
+- gxx_linux-64=7.3.0
+- tclap=1.2.1
+- cmake=3.10.3
+- make=4.2.1
+- gsl=2.4
+- libstdcxx-ng=9.1.0
+- pip:
+    - pyabc==0.9.14
