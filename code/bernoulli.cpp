@@ -13,16 +13,14 @@
 using namespace std;
 
 
-const string VERSION = "0.0.2";
+const string VERSION = "0.1.0";
 
 
 struct Arguments {
   int n0;
   vector<double> birth_rate;
-  double death_rate;
-  double interaction_birth_rate;
   double interaction_death_rate;
-  double t_end;
+  vector<double> times;
 };
 
 
@@ -103,11 +101,9 @@ int main(int argc, char **argv) {
     TCLAP::CmdLine cmd("General treatment simulator", ' ', VERSION);
 
     TCLAP::ValueArg<int> a_n0("n", "n0", "Starting cell count", true, 100, "integer", cmd);
-    TCLAP::ValueArg<string> a_birth_rate("b", "birth-rate", "Birth rate", true, "", "[0, 1, 2]", cmd);
-    TCLAP::ValueArg<double> a_death_rate("d", "death_rate", "Death rate", true, 100, "double", cmd);
-    TCLAP::ValueArg<double> a_interaction_birth_rate("p", "interaction-birth-rate", "Interaction Birth rate", true, 100, "double", cmd);
+    TCLAP::ValueArg<string> a_birth_rate("b", "birth-rate", "Birth rate", true, "", "[0, 1, 2, ...]", cmd);
     TCLAP::ValueArg<double> a_interaction_death_rate("q", "interaction-death_rate", "Interaction Death rate", true, 100, "double", cmd);
-    TCLAP::ValueArg<double> a_t("t", "t-max", "Simulation time", true, 100, "double", cmd);
+    TCLAP::ValueArg<string> a_times("t", "measure-times", "Times to measure population size", true, "", "[0, 1, 2, ...]", cmd);
 
     cmd.parse(argc, argv);
 
@@ -126,17 +122,24 @@ int main(int argc, char **argv) {
       // interpret a single value as a constant line
       a.birth_rate.push_back(a.birth_rate[0]);
     }
-    a.death_rate = a_death_rate.getValue();
-    a.interaction_birth_rate = a_interaction_birth_rate.getValue();
     a.interaction_death_rate = a_interaction_death_rate.getValue();
-    a.t_end = a_t.getValue();
+    string tstring = a_times.getValue();
+    smatch m_t;
+    while (regex_search(tstring, m_t, re_b)) {
+      for (auto x: m_t) {
+        a.times.push_back(stod(x));
+      }
+      tstring = m_t.suffix().str();
+    }
 
     // Sanity checks
     assert(a.n0 > 0);
-    assert(a.death_rate >= 0);
-    assert(a.interaction_birth_rate >= 0);
+    for (size_t i = 1; i < a.times.size(); ++i) {
+      assert(a.times[i-1] >= 0.0);
+      // verify that they are sorted
+      assert(a.times[i-1] < a.times[i]);
+    }
     assert(a.interaction_death_rate >= 0);
-    assert(a.t_end > 0);
 
   } catch (TCLAP::ArgException &e) {
     cerr << "TCLAP Error: " << e.error() << endl << "\targ: " << e.argId() << endl;
@@ -144,13 +147,11 @@ int main(int argc, char **argv) {
   }
 
   // ### Calculation ### //
-  vector<double> effective_birth_rate;
-  for (auto r: a.birth_rate)
-    effective_birth_rate.push_back(r - a.death_rate);
-  birth_rate = effective_birth_rate;
 
-  t_end = a.t_end;
-  interaction = a.interaction_birth_rate + a.interaction_death_rate;
+  // setup globals
+  t_end = a.times.back();
+  interaction = a.interaction_death_rate;
+  birth_rate = a.birth_rate;
 
   // Logistic growth with a variable birthrate is a bernoulli differential equation with the following solution
   // f(t) = e^( integral_0^t a(ξ) dξ)/(c_1 - integral_0^t-b e^( integral_0^ζ a(ξ) dξ) dζ)
@@ -167,14 +168,12 @@ int main(int argc, char **argv) {
   std::cout << "time\tsize\trate\n";
   cout.precision(numeric_limits<double>::max_digits10);
 
-  double resolution = 10.0;
-
   // it is possible for the integration to fail on numerical errors
   // in that case, we want the program to keep running while raising the error limits
   gsl_set_error_handler_off();
 
-  for (int i = 0; i < static_cast<int>(a.t_end*resolution) + 2; ++i) {
-    double t = i / resolution;
+  for (auto time: a.times) {
+    double t = time;
     // First, find the numerator integral_0^t a(ξ) dξ
     double numerator = birth_rate_integral(0.0, t);
 
