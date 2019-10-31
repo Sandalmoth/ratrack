@@ -81,21 +81,28 @@ def distance(simulation, observation):
 
     distances = []
 
+    print(simulation, observation)
+
     for id_string in simtools.OBSERVED:
         sim = {str(k): simulation[id_string + '.' + str(k)] for k in ['time', 'size', 'rate']}
         obs = {str(k): observation[id_string + '.' + str(k)] for k in simtools.OBSERVED[id_string]}
 
-        sim_selected, obs_selected = select_time_match(sim['time'], obs['time'])
+        print(sim, obs)
 
-        selected_size = [sim['size'][x] for x in sim_selected]
+        # selected_size = [sim['size'][x] for x in sim_selected]
+
+        selected_size = sim['size']
 
         filters = copy.deepcopy(simtools.PARAMS['filters'])
-        samplings = [simtools.get_samplings_dilutions(obs, x)[0] for x in obs_selected]
-        dilutions = [simtools.get_samplings_dilutions(obs, x)[1] for x in obs_selected]
+        samplings, dilutions = simtools.get_samplings_dilutions(obs)
+
+        print(samplings, dilutions)
 
         # apply noise filters
-        selected_count = simtools.apply_sampling(selected_size, zip(*samplings), zip(*dilutions))
+        selected_count = simtools.apply_sampling(selected_size, samplings, dilutions)
         selected_count = simtools.apply_noise(selected_count, filters)
+
+        print(selected_count)
 
         distances.append(rmsd(np.array(obs['count']), selected_count))
 
@@ -116,15 +123,15 @@ def abc_model(params):
                      key=lambda x: int(re_birthrates.search(x[0]).group(1)))
         birthrate = [x[1] for x in kvs]
 
-        deathrate = simtools.PARAMS['simulation_params']['deathrate_interaction']
+        deathrate_interaction = simtools.PARAMS['simulation_params']['deathrate_interaction']
+
+        print('obs', obs)
 
         time, size, rate = simtools.simulate_timeline(
             simtools.PARAMS['starting_population'][id_string](),
-            simtools.PARAMS['end_time'][id_string](),
+            obs['time'],
             birthrate,
-            0,
-            0,
-            deathrate,
+            deathrate_interaction,
             simtools.PARAMS['abc_params']['simulator'],
             verbosity=1
         )

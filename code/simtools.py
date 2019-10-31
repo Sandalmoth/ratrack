@@ -19,16 +19,11 @@ BACKWARD_SAMPLING = 'MLE'
 
 # simulate a lb-process using the given parameters with external software
 # n - starting number of cells
-# t - time when to end (time starts at 0), so simulation length
+# t - series of time points when population will be measured (have to include 0)
 # b - birth rate, can be a number or a list. In case of list, it is evenly spread over the timeline
 #     with interpolation
-# d - death rate
-# p - birth rate interaction reduction. part of quadratic term in logistic equation applied to
-#     reducing birth rate first. Overflow goes to increasing death rate (birth rate has to be > 0)
 # q - interaction death rate. Complementary part of quadratic term that just works by increasing
 #     death rate.
-# For the purposes of this simulation the p/q balance likely doesn't matter much, but it is
-# included for completeness.
 # Returns a simulated timeline, calculated using c++ software.
 # (Stochastic simulation using next reaction method)
 # returns 3 vectors, time, size, rate
@@ -36,10 +31,8 @@ BACKWARD_SAMPLING = 'MLE'
 # size - size at that timepoint
 # rate - growth rate at that timepoint (nice for visualizing interpolation)
 def simulate_timeline(starting_population,
-                      end_time,
+                      times,
                       birthrates,
-                      deathrate,
-                      birthrate_interaction,
                       deathrate_interaction,
                       simulator,
                       verbosity=0):
@@ -48,23 +41,24 @@ def simulate_timeline(starting_population,
     """
     # sanity checking
     assert starting_population > 0
-    assert end_time >= 0
     if simulator != 'bernoulli':
         # bernoulli simulator handles negative rates without issues
         # NOTE remember to update this if if neccessary
         for birthrate in birthrates:
             assert birthrate >= 0
-    assert deathrate >= 0
-    assert birthrate_interaction >= 0
     assert deathrate_interaction >= 0
+    times = sorted(times)
+    for t in times:
+        assert t >= 0
     # run external
+
     cmd = 'code/bin/' + simulator + \
           ' -n ' + str(starting_population) + \
-          ' -t ' + str(end_time) + \
-          ' -b \'' + str(birthrates) + '\'' \
-          ' -d ' + str(deathrate) + \
-          ' -p ' + str(birthrate_interaction) + \
+          ' -t \'' + str(['{:f}'.format(x) for x in times]) + '\'' \
+          ' -b \'' + str(['{:f}'.format(x) for x in birthrates]) + '\'' \
           ' -q ' + str(deathrate_interaction)
+          # ' -t \'' + str(times) + '\'' \
+          # ' -b \'' + str(birthrates) + '\'' \
     if verbosity > 0:
         print(cmd)
     output = subprocess.getoutput(cmd)
@@ -126,78 +120,37 @@ def apply_noise(size, filters):
     return np.round(size)
 
 
-#     """
-#     holder of parameters for lb process
-#     """
-#     def __init__(self, starting_population, time,
-#                  death_interaction, simulator):
-#         self.starting_population = starting_population
-#         self.end_time = time
-#         self.death_interaction = death_interaction
-#         self.simulator = simulator
-#         self.filters = []
-#         # TODO add sampling methods to parameter parsing
-#         self.forward_sampling_method = 'poisson-RV'
-#         self.backward_sampling_method = 'poisson-MLE'
-#         self.starting_population_samplings = []
-#         self.starting_population_dilutions = []
-
-#     def get_starting_population(self):
-#         """
-#         Starting population can be a constant, or an R.V.
-#         """
-#         if self.forward_sampling_method == 'poisson-MLE' and \
-#            self.backward_sampling_method == 'poisson-MLE':
-#             starting_population = self.starting_population
-#             for sample in self.starting_population_samplings:
-#                 starting_population /= sample
-#             for dilution in self.starting_population_dilutions:
-#                 starting_population *= dilution
-#             starting_population = int(starting_population)
-#             return starting_population
-
-#         elif self.forward_sampling_method == 'poisson-RV' and \
-#              self.backward_sampling_method == 'poisson-MLE':
-#             starting_population = self.starting_population
-#             for sample in self.starting_population_samplings:
-#                 starting_population /= sample
-#             for dilution in self.starting_population_dilutions:
-#                 starting_population = np.random.poisson(starting_population * dilution)
-#             starting_population = int(starting_population)
-#             return starting_population
-
-#         sys.exit("Invalid combination of forward and backward sampling methods")
-
-
-# # defaults, see also reconstruct() where some are changed
-# LB_PARAMS = LBParameters(100000, 7.0, 0.3333e-7, 'rar-engine')
-# PARAMS = {}
-
 PARAMS = {}
 
 OBSERVED = {}
 
-def get_samplings_dilutions(observed, observation=0):
+
+def get_samplings_dilutions(observed):
     """
     Get the list of all samplings and dilutions done to particular observation
     """
-    samplings = []
-    dilutions = []
-    i = 1
-    while True:
-        if 'sample' + str(i) in observed.keys():
-            samplings.append(observed['sample' + str(i)][observation])
-        else:
-            break
-        i += 1
-    i = 1
-    while True:
-        if 'dilute' + str(i) in observed.keys():
-            dilutions.append(observed['dilute' + str(i)][observation])
-        else:
-            break
-        i += 1
-    return samplings, dilutions
+    samplings = [[] for __ in observed['time']]
+    dilutions = [[] for __ in observed['time']]
+    print('obs', observed)
+    for j, __ in enumerate(observed['time']):
+        i = 1
+        while True:
+            if 'sample' + str(i) in observed.keys():
+                samplings[j].append(observed['sample' + str(i)][j])
+            else:
+                break
+            i += 1
+        i = 1
+        while True:
+            if 'dilute' + str(i) in observed.keys():
+                dilutions[j].append(observed['dilute' + str(i)][j])
+            else:
+                break
+            i += 1
+
+    print(np.array(samplings), np.array(dilutions))
+    return np.array(samplings), np.array(dilutions)
+    # return np.array(zip(*samplings)), np.array(zip(*dilutions))
 
 
 def apply_sampling(size, samplings, dilutions):
@@ -206,21 +159,21 @@ def apply_sampling(size, samplings, dilutions):
     """
 
     if BACKWARD_SAMPLING == 'MLE':
-        for dilution in dilutions:
-            dilution = np.array(dilution)
-            size /= dilution
+        for dilution in dilutions.transpose():
+            # dilution = np.array(dilution)
+            size = size/dilution
             # size = [x / y for x, y in zip(size, dilution)]
     else:
         sys.exit("Unsupported backward sampling method")
 
     if FORWARD_SAMPLING == 'MLE':
-        for sample in samplings:
-            sample = np.array(sample)
-            size *= sample
+        for sample in samplings.transpose():
+            # sample = np.array(sample)
+            size = size*sample
             # size = [x * y for x, y in zip(size, sample)]
     elif FORWARD_SAMPLING == 'RV':
-        for sample in samplings:
-            sample = np.array(sample)
+        for sample in samplings.transpose():
+            # sample = np.array(sample)
             size = np.random.poisson(size*sample)
             # size = [np.random.poisson(x * y) for x, y in zip(size, sample)]
     else:
@@ -285,6 +238,8 @@ def parse_params(paramfile, observed=None):
         PARAMS['starting_population'] = {}
         for id_string, obs in observed.items():
             samplings, dilutions = get_samplings_dilutions(obs)
+            samplings = samplings[0]
+            dilutions = dilutions[0]
             pop = obs['count'][0]
             if FORWARD_SAMPLING == 'MLE' and BACKWARD_SAMPLING == 'MLE':
                 for sample in samplings:
@@ -294,7 +249,7 @@ def parse_params(paramfile, observed=None):
                 PARAMS['starting_population'][id_string] = lambda x=int(pop): x
             if FORWARD_SAMPLING == 'RV' and BACKWARD_SAMPLING == 'MLE':
                 def f(x=pop, y=copy.deepcopy(samplings), z=copy.deepcopy(dilutions)):
-                    # print(x, y, z)
+                    print(x, list(y), list(z))
                     for sample in y:
                         x /= sample
                     for dilution in z:
