@@ -1,0 +1,61 @@
+[simulation_params]
+starting_cell_count = 'calculate'
+end_time = 'max_observed'
+# deathrate interaction is the inverse of the carrying capacity
+# i.e. from measurements we know that kcl-22 cells grow to approximately
+# 3e6 cells in the culture volumes we use. And so: 1/3e6 = 3.33e-7
+# This is assumed to be unaffected by treatment, verify for your cells
+# that this is true. An incorrect estimate will still yield rates timelines
+# that make sense, but there will be some systematic error in them.
+deathrate_interaction = 3.33e-7
+
+[abc_params]
+starting_population_size = 200
+max_population_size = 1000
+min_population_size = 200
+min_epsilon = 0.1
+max_populations = 10
+min_acceptance = 0.0
+# for the lower limit, choose a very low value above 0
+# for the upper limit, a few times the growth rate of normal cells
+# is reasonable, but the degree of adaptation expected may vary
+# with the particular experiment
+rate_limits = [-0.5, 2.5]
+resolution_limits = [1, 2]
+parallel_simulations = 1
+# 'bernoulli' numerically solves a differential equation
+# it is very fast
+# 'rar-engine' simulates a logistic branching process
+# it is slower, but arguably more realistic
+# a reasonable choice is to choose the diff.eq. solver for large
+# population densities (yeast, bacteria, etc) and the exact solver
+# for lower population densities (mammalian cell lines, etc.)
+# bernoulli is O(1), rar engine is O(N) (approximately anyway)
+# for this purpose, large begins somewhere around 2e6
+simulator = 'bernoulli'
+# growth rate timelines can be calculated together or individually
+# normally splits on a name level
+# however, if coupling sets are provided, these
+# observations will be grouped together and parametrize one timeline
+# alternate options are 'all' meaning all are coupled
+# or 'none' meaning none are coupled
+birthrate_coupling_sets = [
+  ['kcl22.B2.g0','kcl22.C2.g0','kcl22.B3.g0','kcl22.C3.g0'],
+  ['kcl22.B4.g0','kcl22.C4.g0','kcl22.B5.g0','kcl22.C5.g0'],
+  ['kcl22.B2.g1','kcl22.C2.g1','kcl22.B3.g1','kcl22.C3.g1'],
+  ['kcl22.B4.g1','kcl22.C4.g1','kcl22.B5.g1','kcl22.C5.g1']
+]
+
+# parameters which, if present, makes the plot labels more clear
+[plot_params]
+coupling_names = ['IM160, gen 1', 'IM240, gen 1', 'IM160, gen 2', 'IM240, gen 2']
+population_measure = 'Cells mL$^{-1}$'
+
+
+# Counting noise filters (sampling noise is modelled separately)
+# At least one must be provided
+# filter that does nothing
+[[filters]]
+name = 'copy'
+
+
