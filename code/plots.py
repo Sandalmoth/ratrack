@@ -17,12 +17,38 @@ import matplotlib.patches as patches
 from pyabc import History
 from scipy.stats import linregress
 from scipy.stats import f_oneway
+# from scipy.optimize import minimize
 import pandas as pd
 
 import simtools
 
 
 COLORS = ['k', 'r', 'b']
+
+
+def hpdi(data, width=0.89):
+    """
+    calculate the hpdi for a set of samples
+    """
+    n_width = int(np.ceil(len(data)*width))
+    print(n_width)
+    if n_width == 1:
+        return [data[0], data[0]]
+    if n_width == 2:
+        return sorted(data)
+    if n_width == len(data):
+        return([min(data), max(data)])
+    data_s = sorted(data)
+    hpdis = []
+    for i, a in enumerate(data_s):
+        j = i + n_width
+        if j >= len(data_s):
+            continue
+        b = data[j]
+        hpdis.append([b - a, a, b])
+    hpdis = sorted(hpdis, key=lambda x: x[0])
+    print(hpdis)
+    return [hpdis[0][1], hpdis[0][2]]
 
 
 @click.group()
@@ -164,6 +190,9 @@ def abc_info(paramfile, obsfile, dbfile, run_id, save):
     else:
         plt.show()
 
+    if save is not None:
+        pdf_out.close()
+
 
 @main.command()
 @click.option('-p', '--paramfile', type=click.Path())
@@ -181,6 +210,7 @@ def result_single(paramfile, obsfile, dbfile, run_id, save):
     abc_history.id = run_id
 
     observed = simtools.parse_observations(obsfile)
+    print(observed)
     id_str = next(iter(observed))
     simtools.parse_params(paramfile, observed)
 
@@ -227,6 +257,38 @@ def result_single(paramfile, obsfile, dbfile, run_id, save):
         for part in violinparts['bodies']:
             part.set_facecolor('lightgrey')
             part.set_alpha(1)
+            # from user Ruggero Turra https://stackoverflow.com/questions/29776114/half-violin-plot
+            m = np.mean(part.get_paths()[0].vertices[:, 0])
+            part.get_paths()[0].vertices[:, 0] = np.clip(
+                part.get_paths()[0].vertices[:, 0],
+                -np.inf,
+                m
+            )
+            part.set_facecolor('lightgrey')
+            part.set_color('lightgrey')
+
+        for t, d in zip(time_axis, abc_data):
+            axs.scatter(t + np.random.uniform(
+                0.1,
+                end_time/(max_point_in_models + 1)*0.4,
+                size=len(d)
+            ), d, color='grey', marker='.', s=1.0, alpha = 0.8)
+            print('HPDI')
+            hpdi_interval = hpdi(d)
+            axs.plot([t + 0.1, t + end_time/(max_point_in_models + 1)*0.4],
+                     [hpdi_interval[0], hpdi_interval[0]],
+                      linestyle='--', color='k', linewidth=1.0)
+            axs.plot([t + 0.1, t + end_time/(max_point_in_models + 1)*0.4],
+                     [hpdi_interval[1], hpdi_interval[1]],
+                      linestyle='--', color='k', linewidth=1.0)
+
+
+# for b in v1['bodies']:
+#     m = np.mean(b.get_paths()[0].vertices[:, 0])
+#     b.get_paths()[0].vertices[:, 0] = np.clip(b.get_paths()[0].vertices[:, 0], -np.inf, m)
+#     b.set_color('r')
+
+
         quartile1, medians, quartile3 = np.percentile(abc_data, [25, 50, 75], axis=1)
         whiskers = np.array([
             adjacent_values(sorted_array, q1, q3)
@@ -239,7 +301,11 @@ def result_single(paramfile, obsfile, dbfile, run_id, save):
         birthrate = [statistics.median(x) for x in abc_data]
         axs.plot(time_axis, birthrate, color='k')
         axs.set_xlabel('Time [days]')
-        axs.set_ylabel('Growth rate [doublings/day]')
+        axs.set_ylabel(r'Growth rate [divisions day$^{-1}$ cell$^{-1}$]')
+
+        title = simtools.PARAMS['plot_params']['coupling_names']
+        axs.set_title(title)
+
 
         # axs.set_ylim(0, simtools.PARAMS['abc_params']['rate_limits'][1])
 
@@ -263,20 +329,30 @@ def result_single(paramfile, obsfile, dbfile, run_id, save):
         df, w = abc_history.get_distribution(m=j, t=max_gen)
         time_axis = np.linspace(0, end_time, len(list(df.columns)))
 
-        samplings = [simtools.get_samplings_dilutions(observed[id_str], x)[0]
-                     for x, __ in enumerate(observed[id_str]['time'])]
-        dilutions = [simtools.get_samplings_dilutions(observed[id_str], x)[1]
-                     for x, __ in enumerate(observed[id_str]['time'])]
+        # samplings = [simtools.get_samplings_dilutions(observed[id_str], x)[0]
+        #              for x, __ in enumerate(observed[id_str]['time'])]
+        # dilutions = [simtools.get_samplings_dilutions(observed[id_str], x)[1]
+        #              for x, __ in enumerate(observed[id_str]['time'])]
 
-        samplings = list(zip(*samplings))
-        dilutions = list(zip(*dilutions))
+        print(observed)
+        print('main obs', simtools.OBSERVED)
+
+        # id_str = list(observed.keys())[j]
+
+        samplings, dilutions = simtools.get_samplings_dilutions(observed[id_str])
+
+        # samplings = list(zip(*samplings))
+        # dilutions = list(zip(*dilutions))
 
         abc_data = [sorted(df[x]) for x in list(df.columns)]
         for k, v in observed.items():
+            print(k, v)
+            samplings, dilutions = simtools.get_samplings_dilutions(observed[k])
             measured = np.array(v['count'])
-            for s in samplings:
+            for s in samplings.transpose():
+                print(measured, s)
                 measured /= s
-            for d in dilutions:
+            for d in dilutions.transpose():
                 measured *= d
 
             axs.scatter(v['time'], measured, marker='.', color='k')
@@ -285,18 +361,20 @@ def result_single(paramfile, obsfile, dbfile, run_id, save):
 
         simulations = None
 
+        time_axis = np.linspace(0, max(observed[id_str]['time']), 100)
+
         i = 0
         for index, row in df.iterrows():
+            # if i > 100:
+            #     break
             # print(index, row)
             time, size, rate = simtools.simulate_timeline(
                 simtools.PARAMS['starting_population'][id_str](),
-                simtools.PARAMS['end_time'][id_str](),
+                time_axis,
                 list(row),
-                0,
-                0,
                 simtools.PARAMS['simulation_params']['deathrate_interaction'],
-                # 'bernoulli',
-                'rar-engine',
+                # simtools.PARAMS['abc_params']['simulator'],
+                'bernoulli',
                 verbosity=1
             )
 
@@ -310,12 +388,21 @@ def result_single(paramfile, obsfile, dbfile, run_id, save):
         print(qt2)
 
         # axs.plot(time, qt1)
-        axs.plot(time, qt2, color='k')
+        axs.plot(time_axis, qt2, color='k')
         # axs.plot(time, qt3)
-        axs.fill_between(time, qt1, qt3, zorder=-1, color='lightgray')
+        axs.fill_between(time_axis, qt1, qt3, zorder=-1, color='lightgray')
 
         axs.set_xlabel('Time [days]')
-        axs.set_ylabel('Population count measure')
+        measurename = 'Population measure'
+        if 'population_measure' in simtools.PARAMS['plot_params']:
+            measurename = simtools.PARAMS['plot_params']['population_measure']
+        axs.set_ylabel(measurename)
+
+        print(j, i, index)
+        print(simtools.PARAMS['abc_params']['birthrate_coupling_sets'])
+
+        title = simtools.PARAMS['plot_params']['coupling_names']
+        axs.set_title(title)
 
         plt.tight_layout()
 
@@ -324,9 +411,9 @@ def result_single(paramfile, obsfile, dbfile, run_id, save):
         else:
             plt.show()
 
-
     if save is not None:
         pdf_out.close()
+
 
 if __name__ == '__main__':
     main()

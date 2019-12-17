@@ -195,7 +195,8 @@ def parse_observations(infile):
     with open(infile, 'r') as in_csv:
         rdr = csv.DictReader(in_csv)
         for obs in rdr:
-            id_string = '.'.join([obs[x] for x in ['name', 'generation', 'well']])
+            # id_string = '.'.join([obs[x] for x in ['name', 'generation', 'well']])
+            id_string = obs['name']
             if id_string not in observed:
                 observed[id_string] = {str(x): [] for x in rdr.fieldnames}
             for k in rdr.fieldnames:

@@ -118,7 +118,7 @@ def abc_model(params):
     data = {}
 
     for id_string, obs in simtools.OBSERVED.items():
-        re_birthrates = re.compile('s' + str(obs['birthrate_group']) + r'\.r([0-9])')
+        re_birthrates = re.compile(r'r([0-9])')
         kvs = sorted([(k, v) for k, v in params.items() if re_birthrates.search(k)],
                      key=lambda x: int(re_birthrates.search(x[0]).group(1)))
         birthrate = [x[1] for x in kvs]
@@ -176,12 +176,11 @@ def abc_setup(birthrate_groups):
             simtools.PARAMS['abc_params']['resolution_limits'][0],
             simtools.PARAMS['abc_params']['resolution_limits'][1] + 1):
         abc_prior_dict = {}
-        for s in range(birthrate_groups):
-            for i in range(resolution_limit):
-                abc_prior_dict['s' + str(s) + '.r' + str(i)] = \
-                    RV("uniform", simtools.PARAMS['abc_params']['rate_limits'][0],
-                       abs(simtools.PARAMS['abc_params']['rate_limits'][1] - \
-                       simtools.PARAMS['abc_params']['rate_limits'][0]))
+        for i in range(resolution_limit):
+            abc_prior_dict['r' + str(i)] = \
+                RV("uniform", simtools.PARAMS['abc_params']['rate_limits'][0],
+                abs(simtools.PARAMS['abc_params']['rate_limits'][1] - \
+                simtools.PARAMS['abc_params']['rate_limits'][0]))
         abc_priors.append(Distribution(birthrate=copy.deepcopy(abc_prior_dict)))
 
     print('priors', abc_priors)
@@ -190,7 +189,8 @@ def abc_setup(birthrate_groups):
                  population_size=AdaptivePopulationSize(
                      int(simtools.PARAMS['abc_params']['starting_population_size']),
                      0.15,
-                     max_population_size=int(simtools.PARAMS['abc_params']['max_population_size'])),
+                     max_population_size=int(simtools.PARAMS['abc_params']['max_population_size']),
+                     min_population_size=int(simtools.PARAMS['abc_params']['min_population_size'])),
                  sampler=MulticoreEvalParallelSampler(
                      simtools.PARAMS['abc_params']['parallel_simulations']))
 
