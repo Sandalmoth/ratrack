@@ -100,6 +100,7 @@ def distance(simulation, observation):
 
         # apply noise filters
         selected_count = simtools.apply_sampling(selected_size, samplings, dilutions)
+        print(type(selected_count))
         selected_count = simtools.apply_noise(selected_count, filters)
 
         print(selected_count)

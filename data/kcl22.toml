@@ -10,9 +10,9 @@ end_time = 'max_observed'
 deathrate_interaction = 3.33e-7
 
 [abc_params]
-starting_population_size = 200
-max_population_size = 1000
-min_population_size = 200
+starting_population_size = 100
+max_population_size = 500
+min_population_size = 100
 min_epsilon = 0.1
 max_populations = 10
 min_acceptance = 0.0
@@ -20,8 +20,8 @@ min_acceptance = 0.0
 # for the upper limit, a few times the growth rate of normal cells
 # is reasonable, but the degree of adaptation expected may vary
 # with the particular experiment
-rate_limits = [-0.5, 2.5]
-resolution_limits = [1, 2]
+rate_limits = [0.01, 3.0]
+resolution_limits = [1, 2, 3]
 parallel_simulations = 1
 # 'bernoulli' numerically solves a differential equation
 # it is very fast
@@ -31,14 +31,16 @@ parallel_simulations = 1
 # population densities (yeast, bacteria, etc) and the exact solver
 # for lower population densities (mammalian cell lines, etc.)
 # bernoulli is O(1), rar engine is O(N) (approximately anyway)
-# for this purpose, large begins somewhere around 2e6
-simulator = 'bernoulli'
+# on an average computer, large might begin around 1-5 million
+# though it depends on how long a simulation time is acceptable
+simulator = 'rar-engine'
 # growth rate timelines can be calculated together or individually
 # normally splits on a name level
 # however, if coupling sets are provided, these
 # observations will be grouped together and parametrize one timeline
 # alternate options are 'all' meaning all are coupled
 # or 'none' meaning none are coupled
+birthrate_coupling_sets = 'all'
 birthrate_coupling_sets = [
   ['kcl22.B2.g0','kcl22.C2.g0','kcl22.B3.g0','kcl22.C3.g0'],
   ['kcl22.B4.g0','kcl22.C4.g0','kcl22.B5.g0','kcl22.C5.g0'],
@@ -49,13 +51,17 @@ birthrate_coupling_sets = [
 # parameters which, if present, makes the plot labels more clear
 [plot_params]
 coupling_names = ['IM160, gen 1', 'IM240, gen 1', 'IM160, gen 2', 'IM240, gen 2']
-population_measure = 'Cells mL$^{-1}$'
-
+population_measure = 'Cells'
 
 # Counting noise filters (sampling noise is modelled separately)
 # At least one must be provided
 # filter that does nothing
+# [[filters]]
+# name = 'copy'
+
 [[filters]]
-name = 'copy'
+name = 'gauss-multiplicative'
+mean = 1.0
+sigma = 0.05
 
 

@@ -111,7 +111,7 @@ def apply_noise(size, filters):
             size = np.random.poisson(size * filt['sample'])
             # size = [np.random.poisson(x * y) for x, y in zip(size, filt['sample'])]
         elif filt['name'] == 'gauss-multiplicative':
-            size *= np.random.normal(filt['mean'], filt['sigma'], size.size)
+            size = np.round(size*np.random.normal(filt['mean'], filt['sigma'], size.size), 0).astype(int)
             # size = [np.random.normal(filt['mean'], filt['sigma']) * x for x in size]
         elif filt['name'] == 'gauss-additive':
             size += np.random.normal(filt['mean'], filt['sigma'], size.size)
