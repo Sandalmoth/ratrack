@@ -14,7 +14,7 @@
 using namespace std;
 
 
-const string VERSION = "0.1.0";
+const string VERSION = "0.1.1";
 
 
 struct Arguments {
@@ -221,7 +221,7 @@ int main(int argc, char **argv) {
     for (size_t i = 1; i < a.times.size(); ++i) {
       assert(a.times[i-1] >= 0.0);
       // verify that they are sorted
-      assert(a.times[i-1] < a.times[i]);
+      assert(a.times[i-1] <= a.times[i]);
     }
 
 
