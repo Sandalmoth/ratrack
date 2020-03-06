@@ -123,11 +123,22 @@ def report_inputs(wildcards):
             + wildcards.filename + '.g' + str(k) + '.fit.pdf'
         sources['g' + str(k) + '.db'] = 'intermediate/' \
             + wildcards.filename + '.g' + str(k) + '.db'
+    return sources
+
+
+
+def report_inputs(wildcards):
+    import toml
+    params = toml.load('data/' + wildcards.filename + '.toml')
+    groups = list(range(len(params['abc_params']['birthrate_coupling_sets'])))
+    sources = {}
+    for k in groups:
+        sources['g' + str(k) + '.db'] = 'intermediate/' \
+            + wildcards.filename + '.g' + str(k) + '.db'
         sources['g' + str(k) + '.csv'] = 'intermediate/' \
             + wildcards.filename + '.g' + str(k) + '.fit.csv'
-        sources['g' + str(k) + '.name'] = \
-            params['abc_params']['birthrate_coupling_sets'][k]
     return sources
+
 
 
 def num_to_aa(n):
