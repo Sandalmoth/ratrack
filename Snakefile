@@ -34,7 +34,7 @@ rule split_by_group:
         obs = "intermediate/{filename}.groups.zero.csv",
         par = "data/{filename}.toml"
     output:
-        dynamic("intermediate/{filename}.g{k}.csv"),
+        dynamic("intermediate/{filename}.g{k}.data.csv"),
         dynamic("intermediate/{filename}.g{k}.toml"),
         # groupinfo = "intermediate/{filename}.groupinfo.toml",
     shell:
@@ -49,7 +49,7 @@ rule reconstruct:
     output:
         "intermediate/{filename}.g{k}.db"
     input:
-        obs = "intermediate/{filename}.g{k}.csv",
+        obs = "intermediate/{filename}.g{k}.data.csv",
         par = "intermediate/{filename}.g{k}.toml"
     run:
         shell(" \
@@ -63,7 +63,7 @@ rule reconstruct:
 rule abc_plots:
     input:
         db = "intermediate/{filename}.g{k}.db",
-        obs = "intermediate/{filename}.g{k}.csv",
+        obs = "intermediate/{filename}.g{k}.data.csv",
         par = "intermediate/{filename}.g{k}.toml"
     output:
         "intermediate/{filename}.g{k}.abc.pdf"
@@ -80,7 +80,7 @@ rule abc_plots:
 rule fit_plots:
     input:
         db = "intermediate/{filename}.g{k}.db",
-        obs = "intermediate/{filename}.g{k}.csv",
+        obs = "intermediate/{filename}.g{k}.data.csv",
         par = "intermediate/{filename}.g{k}.toml"
     output:
         "intermediate/{filename}.g{k}.fit.pdf"
@@ -91,6 +91,23 @@ rule fit_plots:
             -o {input.obs} \
             -d {input.db} \
             --save {output}
+        """
+
+
+rule fit_tables:
+    input:
+        db = "intermediate/{filename}.g{k}.db",
+        obs = "intermediate/{filename}.g{k}.data.csv",
+        par = "intermediate/{filename}.g{k}.toml"
+    output:
+        "intermediate/{filename}.g{k}.fit.csv"
+    shell:
+        """
+        python3 code/plots.py tabulate-single \
+            -p {input.par} \
+            -o {input.obs} \
+            -d {input.db} \
+            -c {output}
         """
 
 
@@ -106,6 +123,10 @@ def report_inputs(wildcards):
             + wildcards.filename + '.g' + str(k) + '.fit.pdf'
         sources['g' + str(k) + '.db'] = 'intermediate/' \
             + wildcards.filename + '.g' + str(k) + '.db'
+        sources['g' + str(k) + '.csv'] = 'intermediate/' \
+            + wildcards.filename + '.g' + str(k) + '.fit.csv'
+        sources['g' + str(k) + '.name'] = \
+            params['abc_params']['birthrate_coupling_sets'][k]
     return sources
 
 
@@ -122,6 +143,17 @@ def num_to_aa(n):
         aa += chr(65 + n%25)
         n //= 25
     return aa
+
+
+rule produce_table:
+    input:
+        unpack(report_inputs)
+    output:
+        "results/{filename}.fit.csv"
+    run:
+        print(input)
+        # tables = ' '.join(['-i ' + input])
+        shell('python3 code/csvtools.py merge -o ' + str(output) + ' ' + tables)
 
 
 rule produce_report:

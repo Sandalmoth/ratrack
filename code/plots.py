@@ -3,6 +3,7 @@ Plotting functions for various causes
 """
 
 
+import csv
 import statistics
 
 import click
@@ -31,7 +32,7 @@ def hpdi(data, width=0.89):
     calculate the hpdi for a set of samples
     """
     n_width = int(np.ceil(len(data)*width))
-    print(n_width)
+    # print(n_width)
     if n_width == 1:
         return [data[0], data[0]]
     if n_width == 2:
@@ -47,7 +48,7 @@ def hpdi(data, width=0.89):
         b = data[j]
         hpdis.append([b - a, a, b])
     hpdis = sorted(hpdis, key=lambda x: x[0])
-    print(hpdis)
+    # print(hpdis)
     return [hpdis[0][1], hpdis[0][2]]
 
 
@@ -413,6 +414,96 @@ def result_single(paramfile, obsfile, dbfile, run_id, save):
 
     if save is not None:
         pdf_out.close()
+
+
+
+# @main.command()
+# @click.option('-c', '--csvfile', type=click.Path())
+# def table_init(csvfile):
+#     fieldnames = ['name', 'model_index', 'model_probability', 'rate_position', 'rate_mean', 'rate_stdev']
+#     with open(csvfile, 'w') as csv_out:
+#         wtr = csv.DictWriter(csv_out, fieldnames=fieldnames)
+#         wtr.writeheader()
+
+
+@main.command()
+@click.option('-p', '--paramfile', type=click.Path())
+@click.option('-o', '--obsfile', type=click.Path())
+@click.option('-d', '--dbfile', type=click.Path())
+@click.option('-c', '--csvfile', type=click.Path())
+@click.option('--run-id', type=int, default=1)
+# @click.option('-n', '--name', type=str)
+def tabulate_single(paramfile, obsfile, dbfile, csvfile, run_id):
+    """
+    Table of results (appending to table)
+    """
+
+    fieldnames = ['name', 'model_index', 'model_probability', 'rate_position', 'rate_mean', 'rate_stdev']
+
+    db_path = 'sqlite:///' + dbfile
+    abc_history = History(db_path)
+    abc_history.id = run_id
+
+    observed = simtools.parse_observations(obsfile)
+    # print(observed)
+    # id_str = next(iter(observed))
+    simtools.parse_params(paramfile, observed)
+
+    # violin plot of results
+    max_gen = abc_history.max_t
+
+    num_models_total = abc_history.nr_of_models_alive(0)
+    num_models_final = abc_history.nr_of_models_alive(max_gen)
+    max_point_in_models = max([abc_history.get_distribution(m=x, t=max_gen)[0].shape[1]
+                               for x in range(num_models_final)])
+
+    with open(csvfile, 'a') as csv_out:
+        wtr = csv.DictWriter(csv_out, fieldnames=fieldnames)
+
+        for j in range(num_models_total):
+            model_prob = abc_history.get_model_probabilities()[j][max_gen]
+            if model_prob == 0.0:
+                continue
+
+            print(j + 1, model_prob)
+
+            df, w = abc_history.get_distribution(m=j, t=max_gen)
+            # print(df)
+            # print(df.columns)
+            # abc_data = [sorted(df['birthrate.b' + str(x)]) for x in range(df.shape[1])]
+
+            # for x in list(df.columns):
+            #     print(x)
+            #     print(df[x])
+            abc_data = [sorted(df[x]) for x in list(df.columns)]
+            # print(abc_data)
+
+            for i, d in enumerate(abc_data):
+                print('HPDI')
+                hpdi_interval = hpdi(d)
+                print(hpdi_interval)
+                print('MEAN')
+                mean = np.mean(d)
+                print(mean)
+                print('SIGMA')
+                sigma = np.std(d)
+                print(sigma)
+
+                row = {
+                    'name': simtools.PARAMS['plot_params']['coupling_names'],
+                    'model_index': j,
+                    'model_probability': model_prob,
+                    'rate_position': i,
+                    'rate_mean': mean,
+                    'rate_stdev': sigma,
+                }
+                wtr.writerow(row)
+
+
+
+
+
+
 
 
 if __name__ == '__main__':

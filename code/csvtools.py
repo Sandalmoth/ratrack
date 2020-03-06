@@ -230,5 +230,24 @@ def split_by_group(infile, paramfile):
             toml.dump(new_params, out_toml)
 
 
+@main.command()
+@click.option('-i', 'infiles', type=click.Path(), multiple=True)
+@click.option('-o', 'outfile', type=click.Path())
+def merge(infiles, outfile):
+    with open(infiles[0], 'r') as in_csv:
+        rdr = csv.DictReader(in_csv)
+        fieldnames = rdr.fieldnames[:]
+
+    with open(outfile, 'w') as out_csv:
+        wtr = csv.DictWriter(out_csv, fieldnames=fieldnames)
+        wtr.writeheader()
+        for infile in infiles:
+            with open(infile, 'r') as in_csv:
+                rdr = csv.DictReader(in_csv)
+                assert rdr.fieldnames == fieldnames
+                for row in rdr:
+                    wtr.writerow(row)
+
+
 if __name__ == '__main__':
     main()
