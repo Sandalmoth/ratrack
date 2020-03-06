@@ -211,7 +211,7 @@ def split_by_group(infile, paramfile):
     groups = {}
 
     for key, dataset in data.items():
-        filename = outfilebase + '.g' + key + '.csv'
+        filename = outfilebase + '.g' + key + '.data.csv'
         pfn = outfilebase + '.g' + key + '.toml'
         groups[key] = {'obs': filename, 'par': pfn}
         params['abc_params']['birthrate_coupling'] = 'all'
