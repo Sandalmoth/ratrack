@@ -218,7 +218,8 @@ def result_single(paramfile, obsfile, dbfile, run_id, save):
     # violin plot of results
     max_gen = abc_history.max_t
 
-    num_models_total = abc_history.nr_of_models_alive(0)
+    # num_models_total = abc_history.nr_of_models_alive(0)
+    num_models_total = simtools.PARAMS['abc_params']['resolution_limits'][1] - simtools.PARAMS['abc_params']['resolution_limits'][0] + 1
     num_models_final = abc_history.nr_of_models_alive(max_gen)
     max_point_in_models = max([abc_history.get_distribution(m=x, t=max_gen)[0].shape[1]
                                for x in range(num_models_final)])
@@ -231,6 +232,8 @@ def result_single(paramfile, obsfile, dbfile, run_id, save):
         pdf_out = PdfPages(save)
 
     for j in range(num_models_total):
+        if j not in abc_history.get_model_probabilities():
+            continue
         model_prob = abc_history.get_model_probabilities()[j][max_gen]
         print(model_prob)
         if model_prob == 0.0:
@@ -320,6 +323,8 @@ def result_single(paramfile, obsfile, dbfile, run_id, save):
 
     # fit against timeline
     for j in range(num_models_total):
+        if j not in abc_history.get_model_probabilities():
+            continue
         model_prob = abc_history.get_model_probabilities()[j][max_gen]
         if model_prob == 0.0:
             continue
