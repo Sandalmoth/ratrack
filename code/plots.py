@@ -452,15 +452,22 @@ def tabulate_single(paramfile, obsfile, dbfile, csvfile, run_id):
     # violin plot of results
     max_gen = abc_history.max_t
 
-    num_models_total = abc_history.nr_of_models_alive(0)
+    # num_models_total = abc_history.nr_of_models_alive(0)
+    num_models_total = simtools.PARAMS['abc_params']['resolution_limits'][1] - simtools.PARAMS['abc_params']['resolution_limits'][0] + 1
     num_models_final = abc_history.nr_of_models_alive(max_gen)
     max_point_in_models = max([abc_history.get_distribution(m=x, t=max_gen)[0].shape[1]
                                for x in range(num_models_final)])
 
-    with open(csvfile, 'a') as csv_out:
+    print(max_gen, num_models_total, num_models_final)
+
+    with open(csvfile, 'w') as csv_out:
         wtr = csv.DictWriter(csv_out, fieldnames=fieldnames)
+        wtr.writeheader()
 
         for j in range(num_models_total):
+            print(abc_history.get_model_probabilities())
+            if j not in abc_history.get_model_probabilities():
+                continue
             model_prob = abc_history.get_model_probabilities()[j][max_gen]
             if model_prob == 0.0:
                 continue

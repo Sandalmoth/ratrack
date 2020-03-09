@@ -244,6 +244,7 @@ def merge(infiles, outfile):
         for infile in infiles:
             with open(infile, 'r') as in_csv:
                 rdr = csv.DictReader(in_csv)
+                # print(rdr.fieldnames, fieldnames)
                 assert rdr.fieldnames == fieldnames
                 for row in rdr:
                     wtr.writerow(row)

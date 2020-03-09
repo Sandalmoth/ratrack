@@ -14,6 +14,7 @@ import numpy as np
 from pyabc import (ABCSMC, Distribution, RV)
 from pyabc.sampler import MulticoreEvalParallelSampler
 from pyabc.populationstrategy import AdaptivePopulationSize
+from pyabc.populationstrategy import ConstantPopulationSize
 from pyabc import History
 import toml
 
@@ -186,12 +187,17 @@ def abc_setup(birthrate_groups):
 
     print('priors', abc_priors)
 
+    #abc = ABCSMC([abc_model for __ in abc_priors], abc_priors, abc_distance,
+    #             population_size=AdaptivePopulationSize(
+    #                 int(simtools.PARAMS['abc_params']['starting_population_size']),
+    #                 0.15,
+    #                 max_population_size=int(simtools.PARAMS['abc_params']['max_population_size']),
+    #                 min_population_size=int(simtools.PARAMS['abc_params']['min_population_size'])),
+    #             sampler=MulticoreEvalParallelSampler(
+    #                 simtools.PARAMS['abc_params']['parallel_simulations']))
     abc = ABCSMC([abc_model for __ in abc_priors], abc_priors, abc_distance,
-                 population_size=AdaptivePopulationSize(
-                     int(simtools.PARAMS['abc_params']['starting_population_size']),
-                     0.15,
-                     max_population_size=int(simtools.PARAMS['abc_params']['max_population_size']),
-                     min_population_size=int(simtools.PARAMS['abc_params']['min_population_size'])),
+                 population_size=ConstantPopulationSize(
+                     int(simtools.PARAMS['abc_params']['starting_population_size'])),
                  sampler=MulticoreEvalParallelSampler(
                      simtools.PARAMS['abc_params']['parallel_simulations']))
 

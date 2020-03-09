@@ -127,14 +127,14 @@ def report_inputs(wildcards):
 
 
 
-def report_inputs(wildcards):
+def table_inputs(wildcards):
     import toml
     params = toml.load('data/' + wildcards.filename + '.toml')
     groups = list(range(len(params['abc_params']['birthrate_coupling_sets'])))
     sources = {}
     for k in groups:
-        sources['g' + str(k) + '.db'] = 'intermediate/' \
-            + wildcards.filename + '.g' + str(k) + '.db'
+        # sources['g' + str(k) + '.db'] = 'intermediate/' \
+        #     + wildcards.filename + '.g' + str(k) + '.db'
         sources['g' + str(k) + '.csv'] = 'intermediate/' \
             + wildcards.filename + '.g' + str(k) + '.fit.csv'
     return sources
@@ -158,12 +158,12 @@ def num_to_aa(n):
 
 rule produce_table:
     input:
-        unpack(report_inputs)
+        unpack(table_inputs)
     output:
         "results/{filename}.fit.csv"
     run:
         print(input)
-        # tables = ' '.join(['-i ' + input])
+        tables = ' '.join(['-i ' + x for x in input])
         shell('python3 code/csvtools.py merge -o ' + str(output) + ' ' + tables)
 
 
