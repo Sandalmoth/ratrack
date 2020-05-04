@@ -145,6 +145,7 @@ def define_groups(infile, paramfile, outfile):
     """
 
     data = {}
+    ignored = set()
 
     with open(infile, 'r') as in_csv:
         rdr = csv.DictReader(in_csv)
@@ -170,7 +171,12 @@ def define_groups(infile, paramfile, outfile):
             obs['birthrate_group'] = 0
     else:
         for id_string, obs in data.items():
-            obs['birthrate_group'] = [id_string in x for x in birthrate_coupling].index(True)
+            try:
+                obs['birthrate_group'] = [id_string in x for x in birthrate_coupling].index(True)
+                print('Creating group for name', id_string)
+            except:
+                print('Ignoring data rows', id_string, 'reason: not in coupling sets')
+                ignored.add(id_string)
 
     with open(outfile, 'w') as out_csv:
         fieldnames = list(data[list(data.keys())[0]].keys())
@@ -178,6 +184,8 @@ def define_groups(infile, paramfile, outfile):
         wtr.writeheader()
         for __, obs in data.items():
             print(obs)
+            if obs['name'][0] in ignored:
+                continue
             for i, __ in enumerate(obs['time']):
                 row = {k: obs[k][i] for k in fieldnames if k[-5:] != 'group'}
                 row['birthrate_group'] = obs['birthrate_group']
@@ -205,12 +213,17 @@ def split_by_group(infile, paramfile):
     params = toml.load(paramfile)
     print(params)
 
-    print(params['abc_params'])
     sets = deepcopy(params['abc_params']['birthrate_coupling_sets'])
+    print(sets)
+    if sets == 'none':
+        sets = [dataset[0]['name'] for key, dataset in data.items()]
+
+    print(sets)
 
     groups = {}
 
     for key, dataset in data.items():
+        # print(key, dataset)
         filename = outfilebase + '.g' + key + '.data.csv'
         pfn = outfilebase + '.g' + key + '.toml'
         groups[key] = {'obs': filename, 'par': pfn}

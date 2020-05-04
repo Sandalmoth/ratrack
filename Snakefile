@@ -21,6 +21,7 @@ rule zero_time:
         "intermediate/{filename}.groups.csv"
     output:
         temp("intermediate/{filename}.groups.zero.csv")
+        # "intermediate/{filename}.groups.zero.csv"
     shell:
         """
         python3 code/csvtools.py zero-time-longform \
@@ -114,7 +115,12 @@ rule fit_tables:
 def report_inputs(wildcards):
     import toml
     params = toml.load('data/' + wildcards.filename + '.toml')
-    groups = list(range(len(params['abc_params']['birthrate_coupling_sets'])))
+    if params['abc_params']['birthrate_coupling_sets'] == 'all':
+        groups = [0]
+    else:
+        groups = list(range(len(params['abc_params']['birthrate_coupling_sets'])))
+    print(params)
+    print(groups)
     sources = {}
     for k in groups:
         sources['g' + str(k) + '.abc'] = 'intermediate/' \
@@ -123,6 +129,7 @@ def report_inputs(wildcards):
             + wildcards.filename + '.g' + str(k) + '.fit.pdf'
         sources['g' + str(k) + '.db'] = 'intermediate/' \
             + wildcards.filename + '.g' + str(k) + '.db'
+    print("collected sources for report:", sources)
     return sources
 
 
@@ -130,13 +137,18 @@ def report_inputs(wildcards):
 def table_inputs(wildcards):
     import toml
     params = toml.load('data/' + wildcards.filename + '.toml')
-    groups = list(range(len(params['abc_params']['birthrate_coupling_sets'])))
+    # groups = list(range(len(params['abc_params']['birthrate_coupling_sets'])))
+    if params['abc_params']['birthrate_coupling_sets'] == 'all':
+        groups = [0]
+    else:
+        groups = list(range(len(params['abc_params']['birthrate_coupling_sets'])))
     sources = {}
     for k in groups:
         # sources['g' + str(k) + '.db'] = 'intermediate/' \
         #     + wildcards.filename + '.g' + str(k) + '.db'
         sources['g' + str(k) + '.csv'] = 'intermediate/' \
             + wildcards.filename + '.g' + str(k) + '.fit.csv'
+    print("collected sources for table:", sources)
     return sources
 
 
@@ -179,9 +191,14 @@ rule produce_report:
         import numpy as np
         from pyabc import History
         params = toml.load('data/' + wildcards.filename + '.toml')
-        groups = list(range(len(params['abc_params']['birthrate_coupling_sets'])))
+        if params['abc_params']['birthrate_coupling_sets'] == 'all':
+            groups = [0]
+        else:
+            groups = list(range(len(params['abc_params']['birthrate_coupling_sets'])))
         sources = {x: {} for x in groups}
+        print(groups)
         for group in groups:
+            print(group)
             sources[group]['names'] = params['abc_params']['birthrate_coupling_sets'][group]
             db_path = 'sqlite:///' + input['g' + str(group) + '.db']
             abc_history = History(db_path)

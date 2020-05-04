@@ -11,17 +11,20 @@ deathrate_interaction = 3.33e-7
 
 [abc_params]
 starting_population_size = 100
-max_population_size = 500
-min_population_size = 100
 min_epsilon = 0.1
 max_populations = 10
 min_acceptance = 0.0
+# growth rate uniform prior
 # for the lower limit, choose a very low value above 0
 # for the upper limit, a few times the growth rate of normal cells
 # is reasonable, but the degree of adaptation expected may vary
 # with the particular experiment
 rate_limits = [0.01, 3.0]
-resolution_limits = [1, 2, 3]
+# lowest and highest number of control points in piecewise linear growth rate
+# i.e. 1 is a constant rate, 2 is a line, 3 is line broken in the middle, etc...
+resolution_limits = [1, 3]
+# number of simulations to run in parallel
+# match to the number of cores, or lower to save headroom performance
 parallel_simulations = 1
 # 'bernoulli' numerically solves a differential equation
 # it is very fast
@@ -30,7 +33,7 @@ parallel_simulations = 1
 # a reasonable choice is to choose the diff.eq. solver for large
 # population densities (yeast, bacteria, etc) and the exact solver
 # for lower population densities (mammalian cell lines, etc.)
-# bernoulli is O(1), rar engine is O(N) (approximately anyway)
+# bernoulli is O(1), rar engine is O(N) (approximately)
 # on an average computer, large might begin around 1-5 million
 # though it depends on how long a simulation time is acceptable
 simulator = 'rar-engine'
@@ -40,7 +43,7 @@ simulator = 'rar-engine'
 # observations will be grouped together and parametrize one timeline
 # alternate options are 'all' meaning all are coupled
 # or 'none' meaning none are coupled
-birthrate_coupling_sets = 'all'
+# birthrate_coupling_sets = 'all'
 birthrate_coupling_sets = [
   ['kcl22.B2.g0','kcl22.C2.g0','kcl22.B3.g0','kcl22.C3.g0'],
   ['kcl22.B4.g0','kcl22.C4.g0','kcl22.B5.g0','kcl22.C5.g0'],
