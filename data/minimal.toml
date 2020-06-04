@@ -1,0 +1,19 @@
+[simulation_params]
+# this is the inverse of the carrying capacity, in this case 1/3e6
+deathrate_interaction = 3.33e-7
+
+[abc_params]
+# range to be considered for growth rates
+rate_limits = [0.01, 3.0]
+# range of the number of control points in piecewise linear function
+resolution_limits = [1, 3]
+parallel_simulations = 4
+simulator = 'bernoulli'
+birthrate_coupling_sets = [
+    'minimal',
+]
+
+[[filters]]
+name = 'gauss-multiplicative'
+mean = 1.0
+sigma = 0.05

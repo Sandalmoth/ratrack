@@ -236,6 +236,9 @@ def split_by_group(infile, paramfile):
                 wtr.writerow(line)
         with open(pfn, 'w') as out_toml:
             new_params = deepcopy(params)
+            if 'plot_params' not in params:
+                params['plot_params'] = {}
+                new_params['plot_params'] = {}
             if 'coupling_names' in params['plot_params']:
                 new_params['plot_params']['coupling_names'] = params['plot_params']['coupling_names'][int(key)]
             else:

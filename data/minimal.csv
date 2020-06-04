@@ -1,0 +1,6 @@
+name,time,count,sample1,sample2
+minimal,0.0,19,0.01,0.02
+minimal,2.0,105,0.01,0.02
+minimal,4.0,403,0.01,0.02
+minimal,6.0,529,0.01,0.02
+minimal,8.0,591,0.01,0.02

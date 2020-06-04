@@ -230,12 +230,31 @@ def parse_params(paramfile, observed=None):
     parse toml parameter file and observed data for lb-process parameters that are not the birthrate
     """
     # set model parameters
-    # starting population is mean of all t=0 observations
     global PARAMS
     PARAMS = toml.load(paramfile)
+
+    # set defaults for variables where parameters are not mandatory
+    if 'starting_cell_count' not in PARAMS['simulation_params']:
+        PARAMS['simulation_params']['starting_cell_count'] = 'calculate'
+    if 'end_time' not in PARAMS['simulation_params']:
+        PARAMS['simulation_params']['end_time'] = 'max_observed'
+
+    if 'starting_population_size' not in PARAMS['abc_params']:
+        PARAMS['abc_params']['starting_population_size'] = 100
+    if 'min_epsilon' not in PARAMS['abc_params']:
+        PARAMS['abc_params']['min_epsilon'] = 0.1
+    if 'max_populations' not in PARAMS['abc_params']:
+        PARAMS['abc_params']['max_populations'] = 10
+    if 'min_acceptance' not in PARAMS['abc_params']:
+        PARAMS['abc_params']['min_acceptance'] = 0.0
+    if 'plot_params' not in PARAMS:
+        PARAMS['plot_params'] = {}
+        PARAMS['plot_params'][['population_measure']] = 'Cells'
+
+    # finalize parsing
     if PARAMS['simulation_params']['starting_cell_count'] == 'calculate':
         if observed is None:
-            sys.exit("Cannot compute starting_cell_count: 'MLE' without observations")
+            sys.exit("Cannot compute starting cell count without observations")
         PARAMS['starting_population'] = {}
         for id_string, obs in observed.items():
             samplings, dilutions = get_samplings_dilutions(obs)
