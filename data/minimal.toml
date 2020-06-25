@@ -1,6 +1,5 @@
 [simulation_params]
-# this is the inverse of the carrying capacity, in this case 1/3e6
-deathrate_interaction = 3.33e-7
+carrying_capacity = 3e6
 
 [abc_params]
 # range to be considered for growth rates
