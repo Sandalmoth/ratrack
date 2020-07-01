@@ -56,3 +56,40 @@ snakemake results/minimal.pdf results/minimal.fit.csv
 ```
 Running twice is necessary as the first run sets up the input files correctly.
 Optionally, run `snakemake results/minimal.pdf results/minimal.fit.csv -n -r' first, which shows a detailed list of all commands that will be executed. Snakemake has many features which will not be elaborated on here.
+
+## Second example
+There is not too much more to know, but, the example in `demo.csv` and `demo.toml` explore some other useful features. I will not reproduce the whole of the `.csv` as it is largely similar. The `.toml` however is worth looking at.
+
+```toml
+[simulation_params]
+carrying_capacity = 3e6
+
+[abc_params]
+# number of particles in ABC simulation
+starting_population_size = 100
+# max number of generations in SMC
+max_populations = 10
+rate_limits = [0.01, 3.0]
+resolution_limits = [2, 2]
+parallel_simulations = 4
+# using the stochastic simulator instead
+simulator = 'rar-engine'
+# we are here grouping counts that were simulated from the same timeline
+# as if we counted twice, or perhaps, the experiments are such that we
+# do not expect the grouped dataseries to diverge, with the differences
+# being primarily between groups
+birthrate_coupling_sets = [
+    ['demo0.a', 'demo0.b'],
+    ['demo1.a', 'demo1.b'],
+    ['demo2.a', 'demo2.b'],
+]
+
+# The plot y label can be changed (though cells is default)
+[plot_params]
+population_measure = 'Cells'
+
+# This data was simulated without additional sampling noise
+[[filters]]
+name = 'copy'
+```
+Running works the same as before (though replacing the `minimal` with `demo`). The main difference here is in having several timelines at once, and grouping some of them together.

@@ -1,0 +1,23 @@
+[simulation_params]
+carrying_capacity = 3e6
+
+[abc_params]
+starting_population_size = 100
+min_epsilon = 0.1
+max_populations = 10
+min_acceptance = 0.0
+rate_limits = [0.01, 3.0]
+resolution_limits = [2, 2]
+parallel_simulations = 4
+simulator = 'rar-engine'
+birthrate_coupling_sets = [
+    ['demo0.a', 'demo0.b'],
+    ['demo1.a', 'demo1.b'],
+    ['demo2.a', 'demo2.b'],
+]
+
+[plot_params]
+population_measure = 'Cells'
+
+[[filters]]
+name = 'copy'

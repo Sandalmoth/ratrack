@@ -1,0 +1,74 @@
+[simulation_params]
+starting_cell_count = 'calculate'
+end_time = 'max_observed'
+# deathrate interaction is the inverse of the carrying capacity
+# i.e. from measurements we know that kcl-22 cells grow to approximately
+# 3e6 cells in the culture volumes we use. And so: 1/3e6 = 3.33e-7
+# This is assumed to be unaffected by treatment, verify for your cells
+# that this is true. An incorrect estimate will still yield rates timelines
+# that make sense, but there will be some systematic error in them.
+deathrate_interaction = 7.7e-7
+
+[abc_params]
+starting_population_size = 100
+min_epsilon = 0.1
+max_populations = 10
+min_acceptance = 0.0
+# growth rate uniform prior
+# for the lower limit, choose a very low value above 0
+# for the upper limit, a few times the growth rate of normal cells
+# is reasonable, but the degree of adaptation expected may vary
+# with the particular experiment
+rate_limits = [0.01, 3.0]
+# lowest and highest number of control points in piecewise linear growth rate
+# i.e. 1 is a constant rate, 2 is a line, 3 is line broken in the middle, etc...
+resolution_limits = [2, 2]
+# number of simulations to run in parallel
+# match to the number of cores, or lower to save headroom performance
+parallel_simulations = 2
+# 'bernoulli' numerically solves a differential equation
+# it is very fast
+# 'rar-engine' simulates a logistic branching process
+# it is slower, but arguably more realistic
+# a reasonable choice is to choose the diff.eq. solver for large
+# population densities (yeast, bacteria, etc) and the exact solver
+# for lower population densities (mammalian cell lines, etc.)
+# bernoulli is O(1), rar engine is O(N) (approximately)
+# on an average computer, large might begin around 1-5 million
+# though it depends on how long a simulation time is acceptable
+simulator = 'rar-engine'
+# growth rate timelines can be calculated together or individually
+# normally splits on a name level
+# however, if coupling sets are provided, these
+# observations will be grouped together and parametrize one timeline
+# alternate options are 'all' meaning all are coupled
+# or 'none' meaning none are coupled
+# birthrate_coupling_sets = 'none'
+birthrate_coupling_sets = [
+    'K562.t0',
+    'K562.t1',
+    'K562.t2',
+    'K562.t3',
+    'K562.t4',
+    'K562.t5',
+    'K562.t6',
+    'K562.t7',
+]
+
+# parameters which, if present, makes the plot labels more clear
+[plot_params]
+# coupling_names = ['base, t0, t1, t2, t3, t4, t5, t6, t7']
+population_measure = 'Cells'
+
+# Counting noise filters (sampling noise is modelled separately)
+# At least one must be provided
+# filter that does nothing
+# [[filters]]
+# name = 'copy'
+
+[[filters]]
+name = 'gauss-multiplicative'
+mean = 1.0
+sigma = 0.05
+
+
