@@ -17,6 +17,10 @@ FORWARD_SAMPLING = 'RV'
 BACKWARD_SAMPLING = 'MLE'
 
 
+# change to 0 for less output, and 2 or 3 for more output
+VERBOSITY = 1
+
+
 # simulate a lb-process using the given parameters with external software
 # n - starting number of cells
 # t - series of time points when population will be measured (have to include 0)
@@ -35,7 +39,7 @@ def simulate_timeline(starting_population,
                       birthrates,
                       deathrate_interaction,
                       simulator,
-                      verbosity=0):
+                      verbosity=VERBOSITY):
     """
     Simulate a lb-process using external software
     """
@@ -131,7 +135,8 @@ def get_samplings_dilutions(observed):
     """
     samplings = [[] for __ in observed['time']]
     dilutions = [[] for __ in observed['time']]
-    print('obs', observed)
+    if VERBOSITY > 2:
+        print('obs', observed)
     for j, __ in enumerate(observed['time']):
         i = 1
         while True:
@@ -148,7 +153,8 @@ def get_samplings_dilutions(observed):
                 break
             i += 1
 
-    print(np.array(samplings), np.array(dilutions))
+    if VERBOSITY > 2:
+        print(np.array(samplings), np.array(dilutions))
     return np.array(samplings), np.array(dilutions)
     # return np.array(zip(*samplings)), np.array(zip(*dilutions))
 
@@ -273,7 +279,7 @@ def parse_params(paramfile, observed=None):
                 PARAMS['starting_population'][id_string] = lambda x=int(pop): x
             if FORWARD_SAMPLING == 'RV' and BACKWARD_SAMPLING == 'MLE':
                 def f(x=pop, y=copy.deepcopy(samplings), z=copy.deepcopy(dilutions)):
-                    print(x, list(y), list(z))
+                    # print(x, list(y), list(z))
                     for sample in y:
                         x /= sample
                     for dilution in z:

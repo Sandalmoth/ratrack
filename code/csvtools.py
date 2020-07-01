@@ -183,7 +183,7 @@ def define_groups(infile, paramfile, outfile):
         wtr = csv.DictWriter(out_csv, fieldnames=fieldnames)
         wtr.writeheader()
         for __, obs in data.items():
-            print(obs)
+            # print(obs)
             if obs['name'][0] in ignored:
                 continue
             for i, __ in enumerate(obs['time']):
@@ -211,14 +211,14 @@ def split_by_group(infile, paramfile):
             data[idx].append(line)
 
     params = toml.load(paramfile)
-    print(params)
+    # print(params)
 
     sets = deepcopy(params['abc_params']['birthrate_coupling_sets'])
-    print(sets)
+    # print(sets)
     if sets == 'none':
         sets = [dataset[0]['name'] for key, dataset in data.items()]
 
-    print(sets)
+    # print(sets)
 
     groups = {}
 

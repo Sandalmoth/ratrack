@@ -143,7 +143,7 @@ def abc_info(paramfile, obsfile, dbfile, run_id, save):
     fig, axs = plt.subplots(nrows=max_points_in_models, sharex=True, sharey=True)
 
     t_axis = np.arange(abc_history.max_t + 1)
-    print(t_axis)
+    # print(t_axis)
     # parameters = ['birthrate.s0.d', 'birthrate.s0.r0']
     all_parameters = [list(abc_history.get_distribution(m=m, t=0)[0].columns)
                   for m in range(num_models)]
@@ -154,7 +154,7 @@ def abc_info(paramfile, obsfile, dbfile, run_id, save):
             parameters.append(y)
     parameters = list(set(parameters))
     parameters = sorted(parameters, key=lambda x: x[-1])
-    print(parameters)
+    # print(parameters)
 
     for m in range(num_models):
 
@@ -178,7 +178,7 @@ def abc_info(paramfile, obsfile, dbfile, run_id, save):
             # if len(medians[param]) == 0:
             if not medians[param]:
                 continue
-            print(t_axis, medians[param])
+            # print(t_axis, medians[param])
             axs[i].plot(t_axis, medians[param], color=COLORS[m])
             axs[i].fill_between(t_axis, qs1[param], qs3[param], color=COLORS[m], alpha=0.2)
 
@@ -211,7 +211,7 @@ def result_single(paramfile, obsfile, dbfile, run_id, save):
     abc_history.id = run_id
 
     observed = simtools.parse_observations(obsfile)
-    print(observed)
+    # print(observed)
     id_str = next(iter(observed))
     simtools.parse_params(paramfile, observed)
 
@@ -235,25 +235,25 @@ def result_single(paramfile, obsfile, dbfile, run_id, save):
         if j not in abc_history.get_model_probabilities():
             continue
         model_prob = abc_history.get_model_probabilities()[j][max_gen]
-        print(model_prob)
+        # print(model_prob)
         if model_prob == 0.0:
             continue
         fig, axs = plt.subplots()
         fig.set_size_inches(4, 3)
         end_time = simtools.PARAMS['end_time'][id_str]()
-        print(end_time)
+        # print(end_time)
 
         df, w = abc_history.get_distribution(m=j, t=max_gen)
-        print(df)
-        print(df.columns)
+        # print(df)
+        # print(df.columns)
         # abc_data = [sorted(df['birthrate.b' + str(x)]) for x in range(df.shape[1])]
         time_axis = np.linspace(0, end_time, len(list(df.columns)))
 
-        for x in list(df.columns):
-            print(x)
-            print(df[x])
+        # for x in list(df.columns):
+            # print(x)
+            # print(df[x])
         abc_data = [sorted(df[x]) for x in list(df.columns)]
-        print(abc_data)
+        # print(abc_data)
 
         violinparts = axs.violinplot(abc_data, positions=time_axis,
                                         widths=end_time/(max_point_in_models + 1)*0.8,
@@ -277,7 +277,7 @@ def result_single(paramfile, obsfile, dbfile, run_id, save):
                 end_time/(max_point_in_models + 1)*0.4,
                 size=len(d)
             ), d, color='grey', marker='.', s=1.0, alpha = 0.8)
-            print('HPDI')
+            # print('HPDI')
             hpdi_interval = hpdi(d)
             axs.plot([t + 0.1, t + end_time/(max_point_in_models + 1)*0.4],
                      [hpdi_interval[0], hpdi_interval[0]],
@@ -340,8 +340,8 @@ def result_single(paramfile, obsfile, dbfile, run_id, save):
         # dilutions = [simtools.get_samplings_dilutions(observed[id_str], x)[1]
         #              for x, __ in enumerate(observed[id_str]['time'])]
 
-        print(observed)
-        print('main obs', simtools.OBSERVED)
+        # print(observed)
+        # print('main obs', simtools.OBSERVED)
 
         # id_str = list(observed.keys())[j]
 
@@ -352,18 +352,18 @@ def result_single(paramfile, obsfile, dbfile, run_id, save):
 
         abc_data = [sorted(df[x]) for x in list(df.columns)]
         for k, v in observed.items():
-            print(k, v)
+            # print(k, v)
             samplings, dilutions = simtools.get_samplings_dilutions(observed[k])
             measured = np.array(v['count'])
             for s in samplings.transpose():
-                print(measured, s)
+                # print(measured, s)
                 measured /= s
             for d in dilutions.transpose():
                 measured *= d
 
             axs.scatter(v['time'], measured, marker='.', color='k')
 
-        print(samplings, dilutions)
+        # print(samplings, dilutions)
 
         simulations = None
 
@@ -391,7 +391,7 @@ def result_single(paramfile, obsfile, dbfile, run_id, save):
             i += 1
 
         qt1, qt2, qt3 = np.quantile(simulations, (0.05, 0.5, 0.95), axis=1)
-        print(qt2)
+        # print(qt2)
 
         # axs.plot(time, qt1)
         axs.plot(time_axis, qt2, color='k')
@@ -404,8 +404,8 @@ def result_single(paramfile, obsfile, dbfile, run_id, save):
             measurename = simtools.PARAMS['plot_params']['population_measure']
         axs.set_ylabel(measurename)
 
-        print(j, i, index)
-        print(simtools.PARAMS['abc_params']['birthrate_coupling_sets'])
+        # print(j, i, index)
+        # print(simtools.PARAMS['abc_params']['birthrate_coupling_sets'])
 
         title = simtools.PARAMS['plot_params']['coupling_names']
         axs.set_title(title)
@@ -463,21 +463,21 @@ def tabulate_single(paramfile, obsfile, dbfile, csvfile, run_id):
     max_point_in_models = max([abc_history.get_distribution(m=x, t=max_gen)[0].shape[1]
                                for x in range(num_models_final)])
 
-    print(max_gen, num_models_total, num_models_final)
+    # print(max_gen, num_models_total, num_models_final)
 
     with open(csvfile, 'w') as csv_out:
         wtr = csv.DictWriter(csv_out, fieldnames=fieldnames)
         wtr.writeheader()
 
         for j in range(num_models_total):
-            print(abc_history.get_model_probabilities())
+            # print(abc_history.get_model_probabilities())
             if j not in abc_history.get_model_probabilities():
                 continue
             model_prob = abc_history.get_model_probabilities()[j][max_gen]
             if model_prob == 0.0:
                 continue
 
-            print(j + 1, model_prob)
+            # print(j + 1, model_prob)
 
             df, w = abc_history.get_distribution(m=j, t=max_gen)
             # print(df)

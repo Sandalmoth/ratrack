@@ -82,13 +82,13 @@ def distance(simulation, observation):
 
     distances = []
 
-    print(simulation, observation)
+    # print(simulation, observation)
 
     for id_string in simtools.OBSERVED:
         sim = {str(k): simulation[id_string + '.' + str(k)] for k in ['time', 'size', 'rate']}
         obs = {str(k): observation[id_string + '.' + str(k)] for k in simtools.OBSERVED[id_string]}
 
-        print(sim, obs)
+        # print(sim, obs)
 
         # selected_size = [sim['size'][x] for x in sim_selected]
 
@@ -97,14 +97,14 @@ def distance(simulation, observation):
         filters = copy.deepcopy(simtools.PARAMS['filters'])
         samplings, dilutions = simtools.get_samplings_dilutions(obs)
 
-        print(samplings, dilutions)
+        # print(samplings, dilutions)
 
         # apply noise filters
         selected_count = simtools.apply_sampling(selected_size, samplings, dilutions)
-        print(type(selected_count))
+        # print(type(selected_count))
         selected_count = simtools.apply_noise(selected_count, filters)
 
-        print(selected_count)
+        # print(selected_count)
 
         distances.append(rmsd(np.array(obs['count']), selected_count))
 
@@ -127,7 +127,7 @@ def abc_model(params):
 
         deathrate_interaction = simtools.PARAMS['simulation_params']['deathrate_interaction']
 
-        print('obs', obs)
+        # print('obs', obs)
 
         time, size, rate = simtools.simulate_timeline(
             simtools.PARAMS['starting_population'][id_string](),
@@ -135,7 +135,7 @@ def abc_model(params):
             birthrate,
             deathrate_interaction,
             simtools.PARAMS['abc_params']['simulator'],
-            verbosity=1
+            # verbosity=1
         )
 
         data[id_string] = {
@@ -156,7 +156,7 @@ def abc_distance(a, b):
     Distance for abc computation. Simply runs distance using abc model dicts
     """
 
-    print(a, b)
+    # print(a, b)
 
     if 'simulation' in a:
         return distance(a, b)
