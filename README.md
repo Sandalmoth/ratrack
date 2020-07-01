@@ -19,9 +19,33 @@ cmake .. && make
 A minimal example is provided in the data folder named `minimal.csv` and `minimal.toml`
 
 ```csv
+name,time,count,sample1,sample2
+minimal,0.0,19,0.01,0.02
+minimal,2.0,105,0.01,0.02
+minimal,4.0,403,0.01,0.02
+minimal,6.0,529,0.01,0.02
+minimal,8.0,591,0.01,0.02
 ```
 
 ```toml
+[simulation_params]
+carrying_capacity = 3e6
+
+[abc_params]
+# range to be considered for growth rates
+rate_limits = [0.01, 3.0]
+# range of the number of control points in piecewise linear function
+resolution_limits = [1, 3]
+parallel_simulations = 4
+simulator = 'bernoulli'
+birthrate_coupling_sets = [
+    'minimal',
+]
+
+[[filters]]
+name = 'gauss-multiplicative'
+mean = 1.0
+sigma = 0.05
 ```
 
 Running is a matter of:
