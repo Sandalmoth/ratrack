@@ -257,6 +257,9 @@ def parse_params(paramfile, observed=None):
         PARAMS['plot_params'] = {}
         PARAMS['plot_params'][['population_measure']] = 'Cells'
 
+    if 'distance_function' not in PARAMS['abc_params']:
+        PARAMS['abc_params']['distance_function'] = 'linear'
+
     # if we specified carrying capacity
     if 'deathrate_interaction' not in PARAMS['simulation_params']:
         PARAMS['simulation_params']['deathrate_interaction'] = 1.0/PARAMS['simulation_params']['carrying_capacity']

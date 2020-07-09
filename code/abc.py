@@ -106,7 +106,10 @@ def distance(simulation, observation):
 
         # print(selected_count)
 
-        distances.append(rmsd(np.array(obs['count']), selected_count))
+        if simtools.PARAMS['abc_params']['distance_function'] == 'linear':
+            distances.append(np.sum(np.abs(np.array(obs['count']) - selected_count)))
+        elif simtools.PARAMS['abc_params']['distance_function'] == 'rmsd':
+            distances.append(rmsd(np.array(obs['count']), selected_count))
 
     return sum(distances)
 

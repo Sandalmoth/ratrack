@@ -37,6 +37,9 @@ parallel_simulations = 2
 # on an average computer, large might begin around 1-5 million
 # though it depends on how long a simulation time is acceptable
 simulator = 'rar-engine'
+# use linear distance to the observation for sampling
+# other option is 'rmsd'
+distance_function = 'linear'
 # growth rate timelines can be calculated together or individually
 # normally splits on a name level
 # however, if coupling sets are provided, these
