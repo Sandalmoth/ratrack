@@ -31,8 +31,13 @@ def test(paramfile, obsfile, minimal=True):
            params['simulation_params']['starting_cell_count'] == 'calculate'
         assert isinstance(params['simulation_params']['end_time'], (int, float)) or \
            params['simulation_params']['end_time'] == 'max_observed'
-    assert isinstance(params['simulation_params']['deathrate_interaction'], (int, float))
-    print('carrying capacity is:', 1/params['simulation_params']['deathrate_interaction'])
+
+    if 'deathrate_interaction' in params['simulation_params']:
+        assert isinstance(params['simulation_params']['deathrate_interaction'], (int, float))
+        print('carrying capacity is:', 1/params['simulation_params']['deathrate_interaction'])
+    else:
+        assert params['simulation_params']['carrying_capacity'] > 0
+        print('carrying capacity is:', params['simulation_params']['carrying_capacity'])
 
     if not minimal:
         assert isinstance(params['abc_params']['starting_population_size'], int)

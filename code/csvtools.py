@@ -137,6 +137,30 @@ def add_column(infile, outfile, name, position, init_val):
 
 @main.command()
 @click.option('-i', 'infile', type=click.Path())
+@click.option('-o', 'outfile', type=click.Path())
+@click.option('-n', 'name', type=str)
+def delete_column(infile, outfile, name):
+    """
+    delete a column named 'name' from a csv
+    """
+    with open(infile, 'r') as in_csv:
+        with open(outfile, 'w') as out_csv:
+            rdr = csv.DictReader(in_csv)
+            fieldnames = rdr.fieldnames[:]
+            if name not in fieldnames:
+                print("column with given name not in csv")
+                return
+            fieldnames.remove(name)
+            wtr = csv.DictWriter(out_csv, fieldnames=fieldnames)
+            wtr.writeheader()
+            for line in rdr:
+                del line[name]
+                wtr.writerow(line)
+
+
+
+@main.command()
+@click.option('-i', 'infile', type=click.Path())
 @click.option('-p', 'paramfile', type=click.Path())
 @click.option('-o', 'outfile', type=click.Path())
 def define_groups(infile, paramfile, outfile):

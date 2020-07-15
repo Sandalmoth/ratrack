@@ -30,9 +30,24 @@ rule zero_time:
         """
 
 
+rule discard_deaths:
+    input:
+        "intermediate/{filename}.groups.zero.csv"
+    output:
+        temp("intermediate/{filename}.groups.zero.deathless.csv")
+        # "intermediate/{filename}.groups.zero.csv"
+    shell:
+        """
+        python3 code/csvtools.py delete-column \
+            -i {input} \
+            -o {output} \
+            -n dead
+        """
+
+
 rule split_by_group:
     input:
-        obs = "intermediate/{filename}.groups.zero.csv",
+        obs = "intermediate/{filename}.groups.zero.deathless.csv",
         par = "data/{filename}.toml"
     output:
         dynamic("intermediate/{filename}.g{k}.data.csv"),

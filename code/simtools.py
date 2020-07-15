@@ -245,6 +245,8 @@ def parse_params(paramfile, observed=None):
     if 'end_time' not in PARAMS['simulation_params']:
         PARAMS['simulation_params']['end_time'] = 'max_observed'
 
+    if 'min_starting_cell_count' not in PARAMS['simulation_params']:
+        PARAMS['simulation_params']['min_starting_cell_count'] = 0
     if 'starting_population_size' not in PARAMS['abc_params']:
         PARAMS['abc_params']['starting_population_size'] = 100
     if 'min_epsilon' not in PARAMS['abc_params']:
@@ -273,7 +275,7 @@ def parse_params(paramfile, observed=None):
             samplings, dilutions = get_samplings_dilutions(obs)
             samplings = samplings[0]
             dilutions = dilutions[0]
-            pop = obs['count'][0]
+            pop = max(obs['count'][0], PARAMS['simulation_params']['min_starting_cell_count'])
             if FORWARD_SAMPLING == 'MLE' and BACKWARD_SAMPLING == 'MLE':
                 for sample in samplings:
                     pop /= sample
