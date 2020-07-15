@@ -147,14 +147,17 @@ def delete_column(infile, outfile, name):
         with open(outfile, 'w') as out_csv:
             rdr = csv.DictReader(in_csv)
             fieldnames = rdr.fieldnames[:]
-            if name not in fieldnames:
-                print("column with given name not in csv")
-                return
-            fieldnames.remove(name)
+            if name in fieldnames:
+                exists = True
+                fieldnames.remove(name)
+            else:
+                exists = False
+                print("column with given name not in csv:", name)
             wtr = csv.DictWriter(out_csv, fieldnames=fieldnames)
             wtr.writeheader()
             for line in rdr:
-                del line[name]
+                if exists:
+                    del line[name]
                 wtr.writerow(line)
 
 
@@ -245,6 +248,8 @@ def split_by_group(infile, paramfile):
     # print(sets)
 
     groups = {}
+
+    # print(data)
 
     for key, dataset in data.items():
         # print(key, dataset)
