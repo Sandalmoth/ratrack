@@ -35,6 +35,7 @@ rule discard_deaths:
         "intermediate/{filename}.groups.zero.csv"
     output:
         temp("intermediate/{filename}.groups.zero.deathless.csv")
+        # "intermediate/{filename}.groups.zero.deathless.csv"
         # "intermediate/{filename}.groups.zero.csv"
     shell:
         """
@@ -132,6 +133,12 @@ def report_inputs(wildcards):
     params = toml.load('data/' + wildcards.filename + '.toml')
     if params['abc_params']['birthrate_coupling_sets'] == 'all':
         groups = [0]
+    elif params['abc_params']['birthrate_coupling_sets'] == 'none':
+        with open('data/' + wildcards.filename + '.csv') as in_csv:
+            names = []
+            for row in in_csv:
+                names.append(row.split(',')[0])
+            groups = list(range(len(set(names)) - 1))
     else:
         groups = list(range(len(params['abc_params']['birthrate_coupling_sets'])))
     print(params)
@@ -155,6 +162,13 @@ def table_inputs(wildcards):
     # groups = list(range(len(params['abc_params']['birthrate_coupling_sets'])))
     if params['abc_params']['birthrate_coupling_sets'] == 'all':
         groups = [0]
+    elif params['abc_params']['birthrate_coupling_sets'] == 'none':
+        with open('data/' + wildcards.filename + '.csv') as in_csv:
+            names = []
+            for row in in_csv:
+                names.append(row.split(',')[0])
+            # print(set(names), len(set(names)))
+            groups = list(range(len(set(names)) - 1))
     else:
         groups = list(range(len(params['abc_params']['birthrate_coupling_sets'])))
     sources = {}
